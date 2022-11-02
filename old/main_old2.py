@@ -18,8 +18,8 @@ RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
 
 JUMPING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
 
-DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "DinoDuck1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoDuck2.png"))]
+DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "low1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "low2.png"))]
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus3.png"))]
@@ -50,16 +50,14 @@ class Dinosaur:
         self.rect = pygame.Rect(self.X_POS, self.Y_POS, img.get_width(), img.get_height())
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.step_index = 0
-        self.W = np.random.randn(8,4)
-        self.W2 = np.random.randn(3,8)
+        self.W = np.random.randn(5,5)
+        self.W2 = np.random.randn(2,5)
         self.score = 0
     def update(self):
         if self.dino_run:
             self.run()
         if self.dino_jump:
             self.jump()
-        if self.dino_duck:
-            self.duck()
         if self.step_index >= 10:
             self.step_index = 0
 
@@ -79,13 +77,11 @@ class Dinosaur:
         self.rect.y = self.Y_POS
         self.step_index += 1
 
-
     def duck(self):
         self.image = DUCKING[self.step_index // 5]
-        self.rect.x = self.X_POS
-        self.rect.y = self.Y_POS+40
+        self.rect.x = 67
+        self.rect.y = self.Y_POS
         self.step_index += 1
-
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.rect.x, self.rect.y))
@@ -102,7 +98,7 @@ class Obstacle:
         self.rect.x = SCREEN_WIDTH + random.randint(0,200)*(1+game_speed*0.01)
 
     def update(self):
-        self.rect.x -= game_speed*0.9
+        self.rect.x -= game_speed*0.8
         if self.rect.x < -self.rect.width:
             obstacles.pop()
 
@@ -124,7 +120,7 @@ class LargeCactus(Obstacle):
 class Bird(Obstacle):
     def __init__(self, image, number_of_cacti):
         super().__init__(image, number_of_cacti)
-        self.rect.y = 250 + random.choice([-50,50,15,-75])
+        self.rect.y = 250 + random.randint(-150,100)
 
 def remove(index):
     dinosaurs.pop(index)
@@ -153,23 +149,8 @@ class Genetic:
         child.W2 = np.where(choice2,dino1.W2,dino2.W2)
         return child
 
-    def linear_crossover(self,dino1,dino2):
-        child = Dinosaur()
-        choice1 = np.random.randint(2, size = dino1.W.shape).astype(bool)
-        choice2 = np.random.randint(2, size = dino1.W2.shape).astype(bool)
-        if np.random.rand()<0.5:
-            child.W = np.where(choice1,dino1.W,dino1.W * 0.5 + dino2.W * 0.5)
-        else:
-            child.W = np.where(choice1,dino2.W,dino1.W * 0.5 + dino2.W * 0.5)
-
-        if np.random.rand()<0.5:
-            child.W2 = np.where(choice2,dino1.W2,dino1.W2 * 0.5 + dino2.W2 * 0.5)
-        else:
-            child.W2 = np.where(choice2,dino2.W2,dino1.W2 * 0.5 + dino2.W2 * 0.5)
-        return child
     def mutation(self,dino):
-        dino.W+=np.random.randn(dino.W.size).reshape(dino.W.shape)*0.1
-        dino.W2+=np.random.randn(dino.W2.size).reshape(dino.W2.shape)*0.1
+        dino.W+=np.random.randn(dino.W.size).reshape(dino.W.shape)
         return dino
 
     def fitness(self,dino):
@@ -183,15 +164,10 @@ class Genetic:
             self.gen.append(dino)
         while len(self.gen) < self.num_pop:
             dino1,dino2 = np.random.choice(self.gen_best,size=2,replace=False)
-
-            if np.random.rand() < 0.5:
-                child = self.crossover(dino1,dino2)
-            else:
-                child = self.linear_crossover(dino1,dino2)
             if np.random.rand()<0.5:
-                self.gen.append(self.mutation(child))
+                self.gen.append(self.mutation(self.crossover(dino1,dino2)))
             else:
-                self.gen.append(child)
+                self.gen.append(self.crossover(dino1,dino2))
     
     def evaluate(self):
         fitness = [self.fitness(dino) for dino in self.gen]
@@ -201,7 +177,7 @@ class Genetic:
         print(f'Fitness:{np.array(fitness)[np.argsort(fitness)][-10:]}')
 
 def train(num_gen=10,num_dino=100):
-    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
+    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, ge, nets, points
     clock = pygame.time.Clock()
     
 
@@ -287,32 +263,25 @@ def train(num_gen=10,num_dino=100):
                     # print(len(dinosaurs))
 
             for i, dinosaur in enumerate(dinosaurs):
-                if dinosaur.rect.y == dinosaur.Y_POS:
-                    # output = dinosaur.W @ np.array([dinosaur.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                    output = dinosaur.W @ np.array([dinosaur.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                    # output = sigmoid(output)
-                    output   = np.maximum(output,0)
-                    output = dinosaur.W2 @ output
-                    output = output.reshape(-1)
-                    # print(output)
-                    # output /= sum(output)
-                    if np.argmax(output)==0 :
-                        dinosaur.dino_jump = True
-                        dinosaur.dino_run = False
-                        dinosaur.dino_duck = False
-                    elif np.argmax(output)==1 :
-                        dinosaur.dino_jump = False
-                        dinosaur.dino_run = False
-                        dinosaur.dino_duck = True
-
+                # output = dinosaur.W @ np.array([dinosaur.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dinosaur.W @ np.array([dinosaur.rect.y,dinosaur.rect.x,obstacle.rect.x,obstacle.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                # output = sigmoid(output)
+                output   = np.maximum(output,0)
+                output = dinosaur.W2 @ output
+                output = output.reshape(-1)
+                # print(output)
+                # output /= sum(output)
+                if output[0] > output[1] and dinosaur.rect.y == dinosaur.Y_POS:
+                    dinosaur.dino_jump = True
+                    dinosaur.dino_run = False
 
             statistics()
             score()
             background()
-            clock.tick(30)
+            clock.tick(60)
             pygame.display.update()
         
         genetic.evaluate()
 
 if __name__ == '__main__':
-    train(num_gen=int(sys.argv[1]),num_dino=int(sys.argv[2]))
+    train(num_gen=100,num_dino=100)
