@@ -200,7 +200,7 @@ class Genetic:
         # print(self.gen_best)
         print(f'Fitness:{np.array(fitness)[np.argsort(fitness)][-10:]}')
 
-def train(num_gen=10,num_dino=100):
+def train(num_gen=10,num_dino=100,fps=30):
     global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
     clock = pygame.time.Clock()
     
@@ -309,10 +309,10 @@ def train(num_gen=10,num_dino=100):
             statistics()
             score()
             background()
-            clock.tick(30)
+            clock.tick(fps)
             pygame.display.update()
         
         genetic.evaluate()
 
 if __name__ == '__main__':
-    train(num_gen=int(sys.argv[1]),num_dino=int(sys.argv[2]))
+    train(num_gen=int(sys.argv[1]),num_dino=int(sys.argv[2]),fps=int(sys.argv[3]))
