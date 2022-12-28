@@ -95,11 +95,11 @@ class Dinosaur:
 
 
 class Obstacle:
-    def __init__(self, image, number_of_cacti):
+    def __init__(self, image, num_ob):
         self.image = image
-        self.type = number_of_cacti
+        self.type = num_ob
         self.rect = self.image[self.type].get_rect()
-        self.rect.x = SCREEN_WIDTH + random.randint(0,200)*(1+game_speed*0.01)
+        self.rect.x = SCREEN_WIDTH * game_speed / 20
 
     def update(self):
         self.rect.x -= game_speed*0.9
@@ -111,19 +111,19 @@ class Obstacle:
 
 
 class SmallCactus(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
+    def __init__(self, image, num_ob):
+        super().__init__(image, num_ob)
         self.rect.y = 325
 
 
 class LargeCactus(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
+    def __init__(self, image, num_ob):
+        super().__init__(image, num_ob)
         self.rect.y = 300
 
 class Bird(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
+    def __init__(self, image, num_ob):
+        super().__init__(image, num_ob)
         self.rect.y = 250 + random.choice([-50,50,15,-75])
 
 def remove(index):
@@ -142,6 +142,8 @@ class Genetic:
         self.gen_count = 0
         self.gen = []
         self.gen_best = []
+        self.best_fitness = np.zeros(5)+0.2
+        self.best_score = -1
         for _ in range(self.num_pop):
             self.gen.append(Dinosaur())
 
@@ -181,24 +183,32 @@ class Genetic:
     def next_gen(self):
         for dino in self.gen_best:
             self.gen.append(dino)
+        for i in range(10):
+            self.gen.append(Dinosaur())
         while len(self.gen) < self.num_pop:
-            dino1,dino2 = np.random.choice(self.gen_best,size=2,replace=False)
-
-            if np.random.rand() < 0.5:
+            if np.random.rand()>0.5:
+                dino1,dino2 = np.random.choice(self.gen_best,size=2,p=self.best_fitness / np.sum(self.best_fitness),replace=False)
+            else:
+                dino1,dino2 = np.random.choice(self.gen[:10],size=2,replace=False)
+            if np.random.rand() < 1:
                 child = self.crossover(dino1,dino2)
             else:
                 child = self.linear_crossover(dino1,dino2)
-            if np.random.rand()<0.5:
+            if np.random.rand()<0.8:
                 self.gen.append(self.mutation(child))
             else:
                 self.gen.append(child)
     
     def evaluate(self):
         fitness = [self.fitness(dino) for dino in self.gen]
-        self.gen_best = np.array(self.gen)[np.argsort(fitness)][-10:]
+        self.gen_best = np.array(self.gen)[np.argsort(fitness)][-5:]
+        self.best_fitness = np.array(fitness)[np.argsort(fitness)][-5:]
+        self.best_score = self.best_fitness[-1]
         self.reset()
+        self.w_best = self.gen_best[-1].W
+        self.w2_best = self.gen_best[-1].W2
         # print(self.gen_best)
-        print(f'Fitness:{np.array(fitness)[np.argsort(fitness)][-10:]}')
+        print(f'Fitness:{self.best_fitness}')
 
 def train(num_gen=10,num_dino=100,fps=30):
     global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
@@ -227,9 +237,9 @@ def train(num_gen=10,num_dino=100,fps=30):
         def score():
             global points, game_speed
             points += 1
-            if points % 200 == 0:
+            if points % 100 == 0:
                 game_speed += 1
-                game_speed = min(30,game_speed)
+                game_speed = min(40,game_speed)
             text = FONT.render(f'Points:  {str(points)}', True, (0, 0, 0))
             SCREEN.blit(text, (950, 50))
 
@@ -267,6 +277,10 @@ def train(num_gen=10,num_dino=100,fps=30):
 
             if len(dinosaurs) == 0:
                 break
+            elif len(dinosaurs) <= 5:
+                if dinosaurs[0].score >= genetic.best_score:
+                    np.save('w_best.npy',dinosaurs[0].W)
+                    np.save('w2_best.npy',dinosaurs[0].W2)
 
             if len(obstacles) == 0:
                 rand_int = random.randint(0, 2)
@@ -314,5 +328,97 @@ def train(num_gen=10,num_dino=100,fps=30):
         
         genetic.evaluate()
 
+def eval(fps=30):
+    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
+    clock = pygame.time.Clock()
+    
+
+    x_pos_bg = 0
+    y_pos_bg = 380
+    game_speed = 20
+
+    game_speed = 20
+    points = 0
+    obstacles = []
+    dino_eval = Dinosaur()
+    dino_eval.W = np.load('w_best.npy')
+    dino_eval.W2 = np.load('w2_best.npy')
+    dinosaurs = [dino_eval]
+
+    def score():
+        global points, game_speed
+        points += 1
+        if points % 100 == 0:
+            game_speed += 1
+            game_speed = min(40,game_speed)
+        text = FONT.render(f'Points:  {str(points)}', True, (0, 0, 0))
+        SCREEN.blit(text, (950, 50))
+
+    def background():
+        global x_pos_bg, y_pos_bg
+        image_width = BG.get_width()
+        SCREEN.blit(BG, (x_pos_bg, y_pos_bg))
+        SCREEN.blit(BG, (image_width + x_pos_bg, y_pos_bg))
+        if x_pos_bg <= -image_width:
+            x_pos_bg = 0
+        x_pos_bg -= game_speed
+
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        SCREEN.fill((255, 255, 255))
+
+        dino_eval.update()
+        dino_eval.draw(SCREEN)
+
+        if len(dinosaurs) == 0:
+            print(f'Dino final score: {dino_eval.score}')
+            break
+
+        if len(obstacles) == 0:
+            rand_int = random.randint(0, 2)
+            if rand_int == 0:
+                obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+            elif rand_int == 1:
+                obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+            elif rand_int == 2:
+                obstacles.append(Bird(BIRD, random.randint(0, 1)))
+        for obstacle in obstacles:
+            obstacle.draw(SCREEN)
+            
+            obstacle.update()
+            if dino_eval.rect.colliderect(obstacle.rect):
+                dino_eval.score = points
+                dinosaurs = []
+                # print(len(dinosaurs))
+
+        if dino_eval.rect.y == dino_eval.Y_POS:
+            # output = dino_eval.W @ np.array([dino_eval.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+            output = dino_eval.W @ np.array([dino_eval.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+            # output = sigmoid(output)
+            output   = np.maximum(output,0)
+            output = dino_eval.W2 @ output
+            output = output.reshape(-1)
+            # print(output)
+            # output /= sum(output)
+            if np.argmax(output)==0 :
+                dino_eval.dino_jump = True
+                dino_eval.dino_run = False
+                dino_eval.dino_duck = False
+            elif np.argmax(output)==1 :
+                dino_eval.dino_jump = False
+                dino_eval.dino_run = False
+                dino_eval.dino_duck = True
+        score()
+        background()
+        clock.tick(int(fps))
+        pygame.display.update()
 if __name__ == '__main__':
-    train(num_gen=int(sys.argv[1]),num_dino=int(sys.argv[2]),fps=int(sys.argv[3]))
+    if sys.argv[1]=='train':
+        train(num_gen=int(sys.argv[2]),num_dino=int(sys.argv[3]),fps=int(sys.argv[4]))
+    elif sys.argv[1]=='eval':
+        eval(fps=sys.argv[2])
