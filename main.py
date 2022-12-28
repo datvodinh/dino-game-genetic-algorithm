@@ -341,8 +341,8 @@ def eval(fps=30):
     points = 0
     obstacles = []
     dino_eval = Dinosaur()
-    dino_eval.W = np.load('w_best.npy')
-    dino_eval.W2 = np.load('w2_best.npy')
+    dino_eval.W = np.load('Data\w_best.npy')
+    dino_eval.W2 = np.load('Data\w2_best.npy')
     dinosaurs = [dino_eval]
 
     def score():
