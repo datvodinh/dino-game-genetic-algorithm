@@ -116,17 +116,21 @@ class SmallCactus(Obstacle):
     def __init__(self, image, num_ob):
         super().__init__(image, num_ob)
         self.rect.y = 325
+        self.id = 'sc'
 
 
 class LargeCactus(Obstacle):
     def __init__(self, image, num_ob):
         super().__init__(image, num_ob)
         self.rect.y = 300
+        self.id = 'lc'
 
 class Bird(Obstacle):
     def __init__(self, image, num_ob):
         super().__init__(image, num_ob)
+        # self.image = image[self.step//5]
         self.rect.y = 250 + random.choice([-50,50,15,-75])
+        self.id = 'b'
 
 def remove(index):
     dinosaurs.pop(index)
@@ -157,23 +161,14 @@ class Genetic:
         child.W2 = np.where(choice2,dino1.W2,dino2.W2)
         return child
 
-    def linear_crossover(self,dino1,dino2):
-        child = Dinosaur()
-        choice1 = np.random.randint(2, size = dino1.W.shape).astype(bool)
-        choice2 = np.random.randint(2, size = dino1.W2.shape).astype(bool)
-        if np.random.rand()<0.5:
-            child.W = np.where(choice1,dino1.W,dino1.W * 0.5 + dino2.W * 0.5)
-        else:
-            child.W = np.where(choice1,dino2.W,dino1.W * 0.5 + dino2.W * 0.5)
-
-        if np.random.rand()<0.5:
-            child.W2 = np.where(choice2,dino1.W2,dino1.W2 * 0.5 + dino2.W2 * 0.5)
-        else:
-            child.W2 = np.where(choice2,dino2.W2,dino1.W2 * 0.5 + dino2.W2 * 0.5)
-        return child
     def mutation(self,dino):
-        dino.W+=np.random.randn(dino.W.size).reshape(dino.W.shape)*0.1
-        dino.W2+=np.random.randn(dino.W2.size).reshape(dino.W2.shape)*0.1
+        dummy = Dinosaur()
+        choice1 = np.random.choice([1.,0.],p = [0.9,0.1], size = dino.W.shape).astype(bool)
+        choice2 = np.random.choice([1.,0.],p = [0.9,0.1], size = dino.W2.shape).astype(bool)
+        dino.W = np.where(choice1,dino.W,dummy.W)
+        dino.W2 = np.where(choice2,dino.W2,dummy.W2)
+        # dino.W+=np.random.randn(dino.W.size).reshape(dino.W.shape)*0.1
+        # dino.W2+=np.random.randn(dino.W2.size).reshape(dino.W2.shape)*0.1
         return dino
 
     def fitness(self,dino):
@@ -194,8 +189,6 @@ class Genetic:
                 dino1,dino2 = np.random.choice(self.gen[:10],size=2,replace=False)
             if np.random.rand() < 1:
                 child = self.crossover(dino1,dino2)
-            else:
-                child = self.linear_crossover(dino1,dino2)
             if np.random.rand()<0.8:
                 self.gen.append(self.mutation(child))
             else:
@@ -245,9 +238,10 @@ def train(num_gen=10,num_dino=100,fps=30):
                 game_speed = min(40,game_speed)
             text_1 = FONT.render(f'Score: {str(points)}', True, (0, 0, 0))
             text_2 = FONT.render(f'Hi Score:{str(genetic.best_score)}',True,(0,0,0))
+            text_3 = FONT.render(f'TRAINING MODE!',True,(0,0,0))
             SCREEN.blit(text_1, (850, 50))
             SCREEN.blit(text_2, (850, 80))
-
+            SCREEN.blit(text_3, (845, 20))
         def statistics():
             global dinosaurs, game_speed
             text_1 = FONT.render(f'Dinosaurs Alive:{str(len(dinosaurs))}', True, (0, 0, 0))
@@ -279,13 +273,23 @@ def train(num_gen=10,num_dino=100,fps=30):
             for dinosaur in dinosaurs:
                 dinosaur.update()
                 dinosaur.draw(SCREEN)
-
+            if points>=100000:
+                with open('Data\w.npy','wb') as f:
+                        np.save(f,dinosaurs[0].W)
+                with open('Data\w2.npy','wb') as f2:
+                    np.save(f2,dinosaurs[0].W2)
+                genetic.best_score = 100000
+                pygame.quit()
+                break
             if len(dinosaurs) == 0:
                 break
             elif len(dinosaurs) <= 5:
                 if dinosaurs[0].score >= genetic.best_score:
-                    np.save('Data\w.npy',dinosaurs[0].W)
-                    np.save('Data\w2.npy',dinosaurs[0].W2)
+                    with open('Data\w.npy','wb') as f:
+                        np.save(f,dinosaurs[0].W)
+                    with open('Data\w2.npy','wb') as f2:
+                        np.save(f2,dinosaurs[0].W2)
+
 
             if len(obstacles) == 0:
                 rand_int = random.randint(0, 2)
@@ -364,8 +368,10 @@ def eval(fps=30):
         if points % 100 == 0:
             game_speed += 1
             game_speed = min(40,game_speed)
-        text = FONT.render(f'Points:  {str(points)}', True, (0, 0, 0))
-        SCREEN.blit(text, (950, 50))
+        text = FONT.render(f'Points:{str(points)}', True, (0, 0, 0))
+        text_2 = FONT.render(f'EVALUATE MODE!',True,(0,0,0))
+        SCREEN.blit(text_2, (850, 20))
+        SCREEN.blit(text, (850, 50))
 
     def background():
         global x_pos_bg, y_pos_bg
