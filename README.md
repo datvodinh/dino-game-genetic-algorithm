@@ -28,3 +28,9 @@ For example:
 ```
 python main.py eval 60
 ```
+
+### 4.Requirement:
+```
+pip install pygame
+pip install numpy
+```
