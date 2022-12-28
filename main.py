@@ -32,7 +32,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
-FONT = pygame.font.Font('freesansbold.ttf', 20)
+FONT = pygame.font.Font('Fonts/PressStart2P.ttf', 16)
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -50,8 +50,10 @@ class Dinosaur:
         self.rect = pygame.Rect(self.X_POS, self.Y_POS, img.get_width(), img.get_height())
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.step_index = 0
-        self.W = np.random.randn(8,4)
-        self.W2 = np.random.randn(3,8)
+        # self.W = np.random.randn(8,4)
+        # self.W2 = np.random.randn(3,8)
+        self.W = np.random.choice([-1.,0.,1.],size=(8,4))
+        self.W2 = np.random.choice([-1.,0.,1.],size=(3,8))
         self.score = 0
     def update(self):
         if self.dino_run:
@@ -143,7 +145,7 @@ class Genetic:
         self.gen = []
         self.gen_best = []
         self.best_fitness = np.zeros(5)+0.2
-        self.best_score = -1
+        self.best_score = 0
         for _ in range(self.num_pop):
             self.gen.append(Dinosaur())
 
@@ -203,10 +205,11 @@ class Genetic:
         fitness = [self.fitness(dino) for dino in self.gen]
         self.gen_best = np.array(self.gen)[np.argsort(fitness)][-5:]
         self.best_fitness = np.array(fitness)[np.argsort(fitness)][-5:]
-        self.best_score = self.best_fitness[-1]
+        if self.best_fitness[-1] > self.best_score:
+            self.best_score = self.best_fitness[-1]
         self.reset()
-        self.w_best = self.gen_best[-1].W
-        self.w2_best = self.gen_best[-1].W2
+        self.w = self.gen_best[-1].W
+        self.w2 = self.gen_best[-1].W2
         # print(self.gen_best)
         print(f'Fitness:{self.best_fitness}')
 
@@ -240,14 +243,16 @@ def train(num_gen=10,num_dino=100,fps=30):
             if points % 100 == 0:
                 game_speed += 1
                 game_speed = min(40,game_speed)
-            text = FONT.render(f'Points:  {str(points)}', True, (0, 0, 0))
-            SCREEN.blit(text, (950, 50))
+            text_1 = FONT.render(f'Score: {str(points)}', True, (0, 0, 0))
+            text_2 = FONT.render(f'Hi Score:{str(genetic.best_score)}',True,(0,0,0))
+            SCREEN.blit(text_1, (850, 50))
+            SCREEN.blit(text_2, (850, 80))
 
         def statistics():
-            global dinosaurs, game_speed, ge
-            text_1 = FONT.render(f'Dinosaurs Alive:  {str(len(dinosaurs))}', True, (0, 0, 0))
-            text_2 = FONT.render(f'Generation:  {genetic.gen_count}', True, (0, 0, 0))
-            text_3 = FONT.render(f'Game Speed:  {str(game_speed)}', True, (0, 0, 0))
+            global dinosaurs, game_speed
+            text_1 = FONT.render(f'Dinosaurs Alive:{str(len(dinosaurs))}', True, (0, 0, 0))
+            text_2 = FONT.render(f'Generation:{genetic.gen_count}', True, (0, 0, 0))
+            text_3 = FONT.render(f'Game Speed:{str(game_speed)}', True, (0, 0, 0))
 
             SCREEN.blit(text_1, (50, 450))
             SCREEN.blit(text_2, (50, 480))
@@ -279,8 +284,8 @@ def train(num_gen=10,num_dino=100,fps=30):
                 break
             elif len(dinosaurs) <= 5:
                 if dinosaurs[0].score >= genetic.best_score:
-                    np.save('w_best.npy',dinosaurs[0].W)
-                    np.save('w2_best.npy',dinosaurs[0].W2)
+                    np.save('Data\w.npy',dinosaurs[0].W)
+                    np.save('Data\w2.npy',dinosaurs[0].W2)
 
             if len(obstacles) == 0:
                 rand_int = random.randint(0, 2)
@@ -341,8 +346,16 @@ def eval(fps=30):
     points = 0
     obstacles = []
     dino_eval = Dinosaur()
-    dino_eval.W = np.load('Data\w_best.npy')
-    dino_eval.W2 = np.load('Data\w2_best.npy')
+    if sys.argv[1]=='eval_best':
+        dino_eval.W = np.load('Data\w_best.npy')
+        dino_eval.W2 = np.load('Data\w2_best.npy')
+        print(f'W1: {dino_eval.W}')
+        print(f'W2: {dino_eval.W2}')
+    elif sys.argv[1]=='eval':
+        dino_eval.W = np.load('Data\w.npy')
+        dino_eval.W2 = np.load('Data\w2.npy')
+        print(f'W1: {dino_eval.W}')
+        print(f'W2: {dino_eval.W2}')
     dinosaurs = [dino_eval]
 
     def score():
@@ -420,5 +433,5 @@ def eval(fps=30):
 if __name__ == '__main__':
     if sys.argv[1]=='train':
         train(num_gen=int(sys.argv[2]),num_dino=int(sys.argv[3]),fps=int(sys.argv[4]))
-    elif sys.argv[1]=='eval':
+    elif sys.argv[1]=='eval' or sys.argv[1]=='eval_best' :
         eval(fps=sys.argv[2])

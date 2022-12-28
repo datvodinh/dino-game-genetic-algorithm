@@ -1,4 +1,5 @@
 ### PROJECT INTRO AI HUST IT3160E
+![image](https://user-images.githubusercontent.com/90944231/209748112-7728473f-6d0e-4f4b-b2af-74931e3af76b.png)
 ### Member:
     1.Võ Đình Đạt 20214890
     2.Đường Minh Quân 20210710
