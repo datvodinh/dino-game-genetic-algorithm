@@ -87,13 +87,16 @@ class Dinosaur:
         self.rect.x = self.X_POS
         self.rect.y = self.Y_POS+40
         self.step_index += 1
+        # self.dino_run = True
+        # self.dino_jump = False
+        # self.dino_duck = False
 
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.rect.x, self.rect.y))
         pygame.draw.rect(SCREEN, self.color, (self.rect.x, self.rect.y, self.rect.width, self.rect.height), 2)
-        for obstacle in obstacles:
-            pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
+        # for obstacle in obstacles:
+        #     pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
 
 
 class Obstacle:
@@ -383,6 +386,10 @@ def eval(fps=30):
         x_pos_bg -= game_speed
 
     run = True
+    text1 = FONT.render(f'Jump!', True, (0, 0, 0))
+    text2 = FONT.render(f'Duck!', True, (0, 0, 0))
+    text3 = FONT.render(f'Run!', True, (0, 0, 0))
+    mode = -1
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -415,7 +422,7 @@ def eval(fps=30):
                 dinosaurs = []
                 # print(len(dinosaurs))
 
-        if dino_eval.rect.y == dino_eval.Y_POS:
+        if dino_eval.rect.y == dino_eval.Y_POS or dino_eval.rect.y == dino_eval.Y_POS+40:
             # output = dino_eval.W @ np.array([dino_eval.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
             output = dino_eval.W @ np.array([dino_eval.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
             # output = sigmoid(output)
@@ -428,10 +435,27 @@ def eval(fps=30):
                 dino_eval.dino_jump = True
                 dino_eval.dino_run = False
                 dino_eval.dino_duck = False
+                
+                
+                mode = 1
             elif np.argmax(output)==1 :
                 dino_eval.dino_jump = False
                 dino_eval.dino_run = False
                 dino_eval.dino_duck = True
+                mode = 2
+                
+            else:
+                dino_eval.dino_jump = False
+                dino_eval.dino_run = True
+                dino_eval.dino_duck = False
+                mode = 3
+                # SCREEN.blit(text3, (400, 50))
+        if mode==1:
+            SCREEN.blit(text1, (400, 50))
+        elif mode==2:
+            SCREEN.blit(text2, (400, 50))
+        elif mode==3:
+            SCREEN.blit(text3, (400, 50))
         score()
         background()
         clock.tick(int(fps))
