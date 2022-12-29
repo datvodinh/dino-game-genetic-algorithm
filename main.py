@@ -52,7 +52,7 @@ class Dinosaur:
         self.step_index = 0
         # self.W = np.random.randn(8,4)
         # self.W2 = np.random.randn(3,8)
-        self.W = np.random.choice([-1.,0.,1.],size=(8,4))
+        self.W = np.random.choice([-1.,-0.75,-0.25,0.,0.25,0.5,0.75,1.],size=(8,4))
         self.W2 = np.random.choice([-1.,0.,1.],size=(3,8))
         self.score = 0
     def update(self):
@@ -134,7 +134,14 @@ class Bird(Obstacle):
         # self.image = image[self.step//5]
         self.rect.y = 250 + random.choice([-50,50,15,-75])
         self.id = 'b'
-
+class HighBird(Obstacle):
+    def __init__(self, image, number_of_cacti):
+        super().__init__(image, number_of_cacti)
+        self.rect.y = 250 - 50
+class LowBird(Obstacle):
+    def __init__(self, image, number_of_cacti):
+        super().__init__(image, number_of_cacti)
+        self.rect.y = 250 +10
 def remove(index):
     dinosaurs.pop(index)
 
@@ -192,7 +199,7 @@ class Genetic:
                 dino1,dino2 = np.random.choice(self.gen[:10],size=2,replace=False)
             if np.random.rand() < 1:
                 child = self.crossover(dino1,dino2)
-            if np.random.rand()<0.8:
+            if np.random.rand()<0.2:
                 self.gen.append(self.mutation(child))
             else:
                 self.gen.append(child)
@@ -281,30 +288,51 @@ def train(num_gen=10,num_dino=100,fps=30):
                         np.save(f,dinosaurs[0].W)
                 with open('Data\w2.npy','wb') as f2:
                     np.save(f2,dinosaurs[0].W2)
+                print('Saved!')
                 genetic.best_score = 100000
                 pygame.quit()
-                break
             if len(dinosaurs) == 0:
                 break
-            elif len(dinosaurs) <= 5:
-                if dinosaurs[0].score >= genetic.best_score:
-                    with open('Data\w.npy','wb') as f:
-                        np.save(f,dinosaurs[0].W)
-                    with open('Data\w2.npy','wb') as f2:
-                        np.save(f2,dinosaurs[0].W2)
+            # elif len(dinosaurs) <= 5:
+            #     if dinosaurs[0].score >= genetic.best_score:
+            #         with open('Data\w.npy','wb') as f:
+            #             np.save(f,dinosaurs[0].W)
+            #         with open('Data\w2.npy','wb') as f2:
+            #             np.save(f2,dinosaurs[0].W2)
 
 
-            if len(obstacles) == 0:
+            # if len(obstacles) == 0:
+            #     rand_int = random.randint(0, 2)
+            #     if rand_int == 0:
+            #         obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+            #     elif rand_int == 1:
+            #         obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+            #     elif rand_int == 2:
+            #         obstacles.append(Bird(BIRD, random.randint(0, 1)))
+            
+            if len(obstacles) == 0: 
                 rand_int = random.randint(0, 2)
+                #Random obstacle
                 if rand_int == 0:
-                    obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+                    if np.random.rand()<0.7:
+                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+                    else:
+                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
                 elif rand_int == 1:
-                    obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+                    if np.random.rand()<0.7:
+                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+                    else:
+                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
                 elif rand_int == 2:
-                    obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                    if np.random.rand()<0.5:
+                        obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                    else:
+                        obstacles.append(HighBird(BIRD, random.randint(0, 1)))  
+                        obstacles.append(LowBird(BIRD, random.randint(0, 1)))
             for obstacle in obstacles:
-                obstacle.draw(SCREEN)
-                
+                obstacle.draw(SCREEN)       
                 obstacle.update()
                 for i, dinosaur in enumerate(dinosaurs):
                     if dinosaur.rect.colliderect(obstacle.rect):
@@ -330,7 +358,10 @@ def train(num_gen=10,num_dino=100,fps=30):
                         dinosaur.dino_jump = False
                         dinosaur.dino_run = False
                         dinosaur.dino_duck = True
-
+                    else:
+                        dinosaur.dino_jump = False
+                        dinosaur.dino_run = True
+                        dinosaur.dino_duck = False
 
             statistics()
             score()
@@ -415,26 +446,25 @@ def eval(fps=30):
                 obstacles.append(Bird(BIRD, random.randint(0, 1)))
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
-            
             obstacle.update()
             if dino_eval.rect.colliderect(obstacle.rect):
                 dino_eval.score = points
                 dinosaurs = []
                 # print(len(dinosaurs))
 
-        if dino_eval.rect.y == dino_eval.Y_POS or dino_eval.rect.y == dino_eval.Y_POS+40:
-            # output = dino_eval.W @ np.array([dino_eval.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-            output = dino_eval.W @ np.array([dino_eval.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-            # output = sigmoid(output)
-            output   = np.maximum(output,0)
-            output = dino_eval.W2 @ output
-            output = output.reshape(-1)
-            # print(output)
-            # output /= sum(output)
-            if np.argmax(output)==0 :
-                dino_eval.dino_jump = True
-                dino_eval.dino_run = False
-                dino_eval.dino_duck = False
+            if dino_eval.rect.y == dino_eval.Y_POS or dino_eval.rect.y == dino_eval.Y_POS+40:
+                # output = dino_eval.W @ np.array([dino_eval.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dino_eval.W @ np.array([dino_eval.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                # output = sigmoid(output)
+                output   = np.maximum(output,0)
+                output = dino_eval.W2 @ output
+                output = output.reshape(-1)
+                # print(output)
+                # output /= sum(output)
+                if np.argmax(output)==0 :
+                    dino_eval.dino_jump = True
+                    dino_eval.dino_run = False
+                    dino_eval.dino_duck = False
                 
                 
                 mode = 1
@@ -442,8 +472,7 @@ def eval(fps=30):
                 dino_eval.dino_jump = False
                 dino_eval.dino_run = False
                 dino_eval.dino_duck = True
-                mode = 2
-                
+                mode = 2   
             else:
                 dino_eval.dino_jump = False
                 dino_eval.dino_run = True

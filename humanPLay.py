@@ -125,7 +125,11 @@ class Bird(Obstacle):
 class HighBird(Obstacle):
     def __init__(self, image, number_of_cacti):
         super().__init__(image, number_of_cacti)
-        self.rect.y = 250 - 15
+        self.rect.y = 250 - 50
+class LowBird(Obstacle):
+    def __init__(self, image, number_of_cacti):
+        super().__init__(image, number_of_cacti)
+        self.rect.y = 250 +15
 def remove(index):
     dinosaurs.pop(index)
 
@@ -179,16 +183,27 @@ while running:
     background()
     clock.tick(30)
     
-    if len(obstacles) == 0: #What's len(ob)=0 means
+    if len(obstacles) == 0: 
         rand_int = random.randint(0, 2)
         #Random obstacle
         if rand_int == 0:
-            obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+            if np.random.rand()<0.7:
+                obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+            else:
+                obstacles.append(SmallCactus(SMALL_CACTUS, 0))
+                obstacles.append(SmallCactus(SMALL_CACTUS, 0))
         elif rand_int == 1:
-            obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+            if np.random.rand()<0.7:
+                obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+            else:
+                obstacles.append(LargeCactus(LARGE_CACTUS, 0))
+                obstacles.append(LargeCactus(LARGE_CACTUS, 0))
         elif rand_int == 2:
-            obstacles.append(Bird(BIRD, random.randint(0, 1)))
-            # obstacles.append(HighBird(BIRD, random.randint(0, 1)))  
+            if np.random.rand()<0.5:
+                obstacles.append(Bird(BIRD, random.randint(0, 1)))
+            else:
+                obstacles.append(HighBird(BIRD, random.randint(0, 1)))  
+                obstacles.append(LowBird(BIRD, random.randint(0, 1))) 
     for obstacle in obstacles:
         obstacle.draw(SCREEN)
         obstacle.update()
