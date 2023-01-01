@@ -191,7 +191,7 @@ while running:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(30)
+    clock.tick(120)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)

@@ -38,7 +38,7 @@ FONT = pygame.font.Font('Fonts/PressStart2P.ttf',16)
 class Dinosaur:
     X_POS = 80
     Y_POS = 310
-    JUMP_VEL = 8.5
+    JUMP_VEL = 34
 
     def __init__(self, img=RUNNING[0]):
         self.image = img
@@ -64,8 +64,8 @@ class Dinosaur:
     def jump(self):
         self.image = JUMPING
         if self.dino_jump:
-            self.rect.y -= self.jump_vel * 4
-            self.jump_vel -= 0.8
+            self.rect.y -= self.jump_vel 
+            self.jump_vel -= 3.2
         if self.jump_vel <= -self.JUMP_VEL: #return to background
             self.dino_jump = False
             self.dino_run = True
@@ -152,7 +152,7 @@ dino_guide.W = np.load('Data\w.npy')
 dino_guide.W2 = np.load('Data\w2.npy')
 print(f'W1: {dino_guide.W}')
 print(f'W2: {dino_guide.W2}')
-dino_guide.X_POS = 120
+# dino_guide.X_POS = 120
 def background():
     global x_pos_bg, y_pos_bg
     image_width = BG.get_width()
@@ -165,9 +165,9 @@ def background():
 def score():
     global points, game_speed
     points += 1
-    if points % 200 == 0:
+    if points % 300 == 0:
         game_speed += 1
-        game_speed = min(30,game_speed)
+        game_speed = min(40,game_speed)
     text = FONT.render(f'Points:{str(points)}', True, (0, 0, 0))
     SCREEN.blit(text, (850, 50))
 clock = pygame.time.Clock()
@@ -194,7 +194,7 @@ while running:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(30)
+    clock.tick(60)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
@@ -223,7 +223,7 @@ while running:
         else:
             if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40 and len(obstacles)>0:
                 # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop),game_speed],dtype=float).reshape(-1,1)
                 # output = sigmoid(output)
                 output   = np.maximum(output,0)
                 output = dino_guide.W2 @ output
@@ -246,8 +246,8 @@ while running:
                     dino_guide.dino_duck = False
                     mode = 3
     vr=game_speed
-    vj=Dinosaur().JUMP_VEL*4
-    g=0.8
+    vj=Dinosaur().JUMP_VEL
+    g=3.2
     Dx=Dinosaur().image.get_width()
     Ox=0
     Oy=0
@@ -259,7 +259,7 @@ while running:
     mode2 = 0
     if len(obstacles)>0:
         #jump
-        if (obstacles[0].rect.x-Dinosaur().rect.x)<=(h1+Dx+20) and 380-(obstacles[0].rect.y+Oy)<40:
+        if (obstacles[0].rect.x-Dinosaur().rect.x)<=(h1+h2)/2 and 380-(obstacles[0].rect.y+Oy)<47:
             # print(vr,vj,Dx,Ox,Oy,h1,h2)
             if dinosaur.dino_duck == True:
                 dinosaur.dino_jump = False
@@ -273,7 +273,7 @@ while running:
                 mode2 = 1
             
         #duck
-        if 380-(obstacles[0].rect.y+Oy)>=40:
+        if 380-(obstacles[0].rect.y+Oy)>=47:
             if dinosaur.rect.y == dinosaur.Y_POS:
                 dinosaur.dino_jump = False
                 dinosaur.dino_run = False
