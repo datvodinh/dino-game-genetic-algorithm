@@ -129,7 +129,7 @@ class Bird(Obstacle):
 class HighBird(Obstacle):
     def __init__(self, image, number_of_cacti):
         super().__init__(image, number_of_cacti)
-        self.rect.y = 250 - 15
+        self.rect.y = 250 - 50
 def remove(index):
     dinosaurs.pop(index)
 
@@ -201,8 +201,10 @@ while running:
         elif rand_int == 1:
             obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
         elif rand_int == 2:
-            obstacles.append(Bird(BIRD, random.randint(0, 1)))
-            # obstacles.append(HighBird(BIRD, random.randint(0, 1)))  
+            if np.random.rand()<0.5:
+                obstacles.append(Bird(BIRD, random.randint(0, 1)))
+            else:
+                obstacles.append(HighBird(BIRD,2))  
     for obstacle in obstacles:
         obstacle.draw(SCREEN)
         obstacle.update()
@@ -215,52 +217,51 @@ while running:
             SCREEN.blit(gameover_txt,(200,150))
         if dino_guide.rect.colliderect(obstacle.rect):
             guide = False
-    if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40:
-            # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-            output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-            # output = sigmoid(output)
-            output   = np.maximum(output,0)
-            output = dino_guide.W2 @ output
-            output = output.reshape(-1)
-            if np.argmax(output)==0 :
-                dino_guide.dino_jump = True
-                dino_guide.dino_run = False
-                dino_guide.dino_duck = False
-                
-                mode = 1
-            elif np.argmax(output)==1 :
-                dino_guide.dino_jump = False
-                dino_guide.dino_run = False
-                dino_guide.dino_duck = True
-                mode = 2
-                
-            else:
-                dino_guide.dino_jump = False
-                dino_guide.dino_run = True
-                dino_guide.dino_duck = False
-                mode = 3
+        else:
+            if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40 and len(obstacles)>0:
+                # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                # output = sigmoid(output)
+                output   = np.maximum(output,0)
+                output = dino_guide.W2 @ output
+                output = output.reshape(-1)
+                # print(np.argmax(output))
+                if np.argmax(output)==0 :
+                    dino_guide.dino_jump = True
+                    dino_guide.dino_run = False
+                    dino_guide.dino_duck = False
+                    
+                    mode = 1
+                elif np.argmax(output)==1 :
+                    dino_guide.dino_jump = False
+                    dino_guide.dino_run = False
+                    dino_guide.dino_duck = True
+                    mode = 2
+                else:
+                    dino_guide.dino_jump = False
+                    dino_guide.dino_run = True
+                    dino_guide.dino_duck = False
+                    mode = 3
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-           
-            if event.key==pygame.K_UP:
-                if dinosaur.rect.y == dinosaur.Y_POS or dinosaur.rect.y == dinosaur.Y_POS+40:
+            if dinosaur.rect.y == dinosaur.Y_POS or dinosaur.rect.y == dinosaur.Y_POS+40:
+                if event.key==pygame.K_UP:
                     dinosaur.dino_jump = True
                     dinosaur.dino_run = False 
                     dinosaur.dino_duck = False
                     mode = 1
-            elif event.key==pygame.K_DOWN:
-                if dinosaur.rect.y == dinosaur.Y_POS:
+                elif event.key==pygame.K_DOWN:
                     dinosaur.dino_jump = False
                     dinosaur.dino_run = False
                     dinosaur.dino_duck = True
                     mode = 2
-            elif event.key==pygame.K_RIGHT:
-                dinosaur.dino_jump = False
-                dinosaur.dino_run = True
-                dinosaur.dino_duck = False
-                mode = 3
+                elif event.key==pygame.K_RIGHT:
+                    dinosaur.dino_jump = False
+                    dinosaur.dino_run = True
+                    dinosaur.dino_duck = False
+                    mode = 3
     if dino_guide.dino_jump == True:
         SCREEN.blit(text1, (400, 50))
     elif dino_guide.dino_duck == True:

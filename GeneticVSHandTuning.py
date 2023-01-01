@@ -33,7 +33,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
-FONT = pygame.font.Font('freesansbold.ttf', 20)
+FONT = pygame.font.Font('Fonts/PressStart2P.ttf',16)
 
 class Dinosaur:
     X_POS = 80
@@ -87,11 +87,14 @@ class Dinosaur:
         # self.dino_jump = False
         # self.dino_duck = False
 
-    def draw(self, SCREEN):
+    def draw(self, SCREEN,line=True,border = True):
+        global obstacles
         SCREEN.blit(self.image, (self.rect.x, self.rect.y))
-        pygame.draw.rect(SCREEN, self.color, (self.rect.x, self.rect.y, self.rect.width, self.rect.height), 2)
-        # for obstacle in obstacles:
-        #     pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
+        if border==True:
+            pygame.draw.rect(SCREEN, self.color, (self.rect.x, self.rect.y, self.rect.width, self.rect.height), 2)
+        if line==True:
+            for obstacle in obstacles:
+                pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
 class Obstacle:
     def __init__(self, image, number_of_cacti):
         self.image = image
@@ -127,10 +130,6 @@ class HighBird(Obstacle):
     def __init__(self, image, number_of_cacti):
         super().__init__(image, number_of_cacti)
         self.rect.y = 250 - 50
-class LowBird(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
-        self.rect.y = 250 +15
 def remove(index):
     dinosaurs.pop(index)
 
@@ -140,6 +139,7 @@ def distance(pos_a, pos_b):
     dy = pos_a[1]-pos_b[1]
     return math.sqrt(dx**2+dy**2)
 dinosaur = Dinosaur()
+dino_guide = Dinosaur()
 running  = True
 obstacles = []
 x_pos_bg = 0
@@ -147,7 +147,12 @@ y_pos_bg = 380
 game_speed = 20
 points = 0
 pausing = False
-dinosaurs = [dinosaur]
+dinosaurs = [dinosaur,dino_guide]
+dino_guide.W = np.load('Data\w.npy')
+dino_guide.W2 = np.load('Data\w2.npy')
+print(f'W1: {dino_guide.W}')
+print(f'W2: {dino_guide.W2}')
+dino_guide.X_POS = 120
 def background():
     global x_pos_bg, y_pos_bg
     image_width = BG.get_width()
@@ -158,18 +163,22 @@ def background():
     x_pos_bg -= game_speed
 
 def score():
-            global points, game_speed
-            points += 1
-            if points % 200 == 0:
-                game_speed += 1
-                game_speed = min(30,game_speed)
-            text = FONT.render(f'Points:  {str(points)}', True, (0, 0, 0))
-            SCREEN.blit(text, (950, 50))
+    global points, game_speed
+    points += 1
+    if points % 200 == 0:
+        game_speed += 1
+        game_speed = min(30,game_speed)
+    text = FONT.render(f'Points:{str(points)}', True, (0, 0, 0))
+    SCREEN.blit(text, (850, 50))
 clock = pygame.time.Clock()
 mode = 0
-text1 = FONT.render(f'Jump!', True, (0, 0, 0))
-text2 = FONT.render(f'Duck!', True, (0, 0, 0))
-text3 = FONT.render(f'Run!', True, (0, 0, 0))
+text1 = FONT.render(f'GA action: Jump!', True, (0, 0, 0))
+text2 = FONT.render(f'GA action: Duck!', True, (0, 0, 0))
+text3 = FONT.render(f'GA action: Run!', True, (0, 0, 0))
+text21 = FONT.render(f'If Else action: Jump!', True, (0, 0, 0))
+text22 = FONT.render(f'If Else action: Duck!', True, (0, 0, 0))
+text23 = FONT.render(f'If Else action: Run!', True, (0, 0, 0))
+guide = True
 while running:
     #exiting   
     for event in pygame.event.get():
@@ -179,31 +188,26 @@ while running:
     #color screen
     SCREEN.fill((255, 255, 255))
     dinosaur.update() #dino's action
-    dinosaur.draw(SCREEN) #
+    dinosaur.draw(SCREEN,line=False,border=False) #
+    if guide==True:
+        dino_guide.update()
+        dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
     clock.tick(30)
     
-    if len(obstacles) == 0: 
+    if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
         #Random obstacle
         if rand_int == 0:
-            if np.random.rand()<0.7:
-                obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
-            else:
-                obstacles.append(SmallCactus(SMALL_CACTUS, 0))
-                obstacles.append(SmallCactus(SMALL_CACTUS, 0))
+            obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
         elif rand_int == 1:
-            if np.random.rand()<0.7:
-                obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
-            else:
-                obstacles.append(LargeCactus(LARGE_CACTUS, 0))
-                obstacles.append(LargeCactus(LARGE_CACTUS, 0))
+            obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
         elif rand_int == 2:
             if np.random.rand()<0.5:
                 obstacles.append(Bird(BIRD, random.randint(0, 1)))
             else:
-                obstacles.append(HighBird(BIRD, 2))   
+                obstacles.append(HighBird(BIRD,2))  
     for obstacle in obstacles:
         obstacle.draw(SCREEN)
         obstacle.update()
@@ -214,38 +218,79 @@ while running:
             running = False 
             gameover_txt = FONT.render('GAME OVER',True,(0,0,0))
             SCREEN.blit(gameover_txt,(200,150))
-            # x_velocity = 0
-            # y_velocity = 0
-            # print(len(dinosaurs))
-            # break
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-           
-            if event.key==pygame.K_UP:
-                if dinosaur.rect.y == dinosaur.Y_POS or dinosaur.rect.y == dinosaur.Y_POS+40:
-                    dinosaur.dino_jump = True
-                    dinosaur.dino_run = False 
-                    dinosaur.dino_duck = False
+        if dino_guide.rect.colliderect(obstacle.rect):
+            guide = False
+        else:
+            if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40 and len(obstacles)>0:
+                # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                # output = sigmoid(output)
+                output   = np.maximum(output,0)
+                output = dino_guide.W2 @ output
+                output = output.reshape(-1)
+                # print(np.argmax(output))
+                if np.argmax(output)==0 :
+                    dino_guide.dino_jump = True
+                    dino_guide.dino_run = False
+                    dino_guide.dino_duck = False
+                    
                     mode = 1
-            elif event.key==pygame.K_DOWN:
-                if dinosaur.rect.y == dinosaur.Y_POS:
-                    dinosaur.dino_jump = False
-                    dinosaur.dino_run = False
-                    dinosaur.dino_duck = True
+                elif np.argmax(output)==1 :
+                    dino_guide.dino_jump = False
+                    dino_guide.dino_run = False
+                    dino_guide.dino_duck = True
                     mode = 2
-            elif event.key==pygame.K_RIGHT:
+                else:
+                    dino_guide.dino_jump = False
+                    dino_guide.dino_run = True
+                    dino_guide.dino_duck = False
+                    mode = 3
+    vr=game_speed
+    vj=Dinosaur().JUMP_VEL*4
+    g=0.8
+    Dx=Dinosaur().image.get_width()
+    Ox=0
+    Oy=0
+    if(len(obstacles)>0):
+        Ox=obstacles[0].image[0].get_width()
+        Oy=obstacles[0].image[0].get_height()
+    h1=vr*((vj-np.sqrt(vj**2-2*g*Oy))/g)+Dx
+    h2=vr*((vj+np.sqrt(vj**2-2*g*Oy))/g)-Ox
+    mode2 = 0
+    if len(obstacles)>0:
+        #jump
+        if (obstacles[0].rect.x-Dinosaur().rect.x)<=(h1+Dx+20) and 380-(obstacles[0].rect.y+Oy)<40:
+            # print(vr,vj,Dx,Ox,Oy,h1,h2)
+            if dinosaur.dino_duck == True:
                 dinosaur.dino_jump = False
-                dinosaur.dino_run = True
+                dinosaur.dino_run = False
+                dinosaur.dino_duck = True
+                mode2=2
+            if (dinosaur.rect.y == dinosaur.Y_POS or dinosaur.rect.y == dinosaur.Y_POS+40):
+                dinosaur.dino_jump = True
+                dinosaur.dino_run = False 
                 dinosaur.dino_duck = False
-                mode = 3
-    if dinosaur.dino_jump == True:
-        SCREEN.blit(text1, (400, 50))
-    elif dinosaur.dino_duck == True:
-        SCREEN.blit(text2, (400, 50))
+                mode2 = 1
+            
+        #duck
+        if 380-(obstacles[0].rect.y+Oy)>=40:
+            if dinosaur.rect.y == dinosaur.Y_POS:
+                dinosaur.dino_jump = False
+                dinosaur.dino_run = False
+                dinosaur.dino_duck = True
+                mode2 = 2
+    if dino_guide.dino_jump == True:
+        SCREEN.blit(text1, (300, 50))
+    elif dino_guide.dino_duck == True:
+        SCREEN.blit(text2, (300, 50))
     else:
-        SCREEN.blit(text3, (400, 50))
+        SCREEN.blit(text3, (300, 50))
+    if dinosaur.dino_jump == True:
+        SCREEN.blit(text21, (300, 80))
+    elif dinosaur.dino_duck == True:
+        SCREEN.blit(text22, (300, 80))
+    else:
+        SCREEN.blit(text23, (300, 80))
     if pausing:
         X_POS = 80
         Y_POS = 310

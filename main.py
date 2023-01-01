@@ -1,7 +1,7 @@
 import pygame
 import os
 import random
-import math
+import math 
 import sys
 import numpy as np
 # from genetic import Genetic
@@ -28,7 +28,8 @@ LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.pn
                 pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus3.png"))]
 
 BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
-        pygame.image.load(os.path.join("Assets/Bird", "Bird2.png"))]
+        pygame.image.load(os.path.join("Assets/Bird", "Bird2.png")),
+        pygame.image.load(os.path.join("Assets/Bird", "Bird3.png"))]
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
@@ -90,11 +91,14 @@ class Dinosaur:
         # self.dino_duck = False
 
 
-    def draw(self, SCREEN):
+    def draw(self, SCREEN,line=True,border = True):
+        global obstacles
         SCREEN.blit(self.image, (self.rect.x, self.rect.y))
-        pygame.draw.rect(SCREEN, self.color, (self.rect.x, self.rect.y, self.rect.width, self.rect.height), 2)
-        # for obstacle in obstacles:
-        #     pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
+        if border==True:
+            pygame.draw.rect(SCREEN, self.color, (self.rect.x, self.rect.y, self.rect.width, self.rect.height), 2)
+        if line==True:
+            for obstacle in obstacles:
+                pygame.draw.line(SCREEN, self.color, (self.rect.x + 54, self.rect.y + 12), obstacle.rect.center, 2)
 
 
 class Obstacle:
@@ -133,12 +137,12 @@ class Bird(Obstacle):
         self.rect.y = 250 + random.choice([-50,50,15,-75])
         self.id = 'b'
 class HighBird(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
+    def __init__(self, image, typex):
+        super().__init__(image, typex)
         self.rect.y = 250 - 50
 class LowBird(Obstacle):
-    def __init__(self, image, number_of_cacti):
-        super().__init__(image, number_of_cacti)
+    def __init__(self, image, typex):
+        super().__init__(image, typex)
         self.rect.y = 250 +10
 def remove(index):
     dinosaurs.pop(index)
@@ -299,7 +303,10 @@ def train(num_gen=10,num_dino=100,fps=30):
                 elif rand_int == 1:
                     obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
                 elif rand_int == 2:
-                    obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                    if np.random.rand()<0.5:
+                        obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                    else:
+                        obstacles.append(HighBird(BIRD,2))
 
             for obstacle in obstacles:
                 obstacle.draw(SCREEN)       
@@ -309,29 +316,26 @@ def train(num_gen=10,num_dino=100,fps=30):
                         dinosaur.score = points
                         remove(i)
                     # print(len(dinosaurs))
-
-            for i, dinosaur in enumerate(dinosaurs):
-                if dinosaur.rect.y == dinosaur.Y_POS:
-                    # output = dinosaur.W @ np.array([dinosaur.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                    output = dinosaur.W @ np.array([dinosaur.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                    # output = sigmoid(output)
-                    output   = np.maximum(output,0)
-                    output = dinosaur.W2 @ output
-                    output = output.reshape(-1)
-                    # print(output)
-                    # output /= sum(output)
-                    if np.argmax(output)==0 :
-                        dinosaur.dino_jump = True
-                        dinosaur.dino_run = False
-                        dinosaur.dino_duck = False
-                    elif np.argmax(output)==1 :
-                        dinosaur.dino_jump = False
-                        dinosaur.dino_run = False
-                        dinosaur.dino_duck = True
                     else:
-                        dinosaur.dino_jump = False
-                        dinosaur.dino_run = True
-                        dinosaur.dino_duck = False
+                        if dinosaur.rect.y == dinosaur.Y_POS  or dinosaur.rect.y == dinosaur.Y_POS+40:
+                        
+                            output = dinosaur.W @ np.array([dinosaur.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                            output   = np.maximum(output,0)
+                            output = dinosaur.W2 @ output
+                            output = output.reshape(-1)
+
+                            if np.argmax(output)==0 :
+                                dinosaur.dino_jump = True
+                                dinosaur.dino_run = False
+                                dinosaur.dino_duck = False
+                            elif np.argmax(output)==1 :
+                                dinosaur.dino_jump = False
+                                dinosaur.dino_run = False
+                                dinosaur.dino_duck = True
+                            else:
+                                dinosaur.dino_jump = False
+                                dinosaur.dino_run = True
+                                dinosaur.dino_duck = False
 
             statistics()
             score()
@@ -360,8 +364,12 @@ def eval(fps=30):
         print(f'W1: {dino_eval.W}')
         print(f'W2: {dino_eval.W2}')
     elif sys.argv[1]=='eval':
-        dino_eval.W = np.load('Data\w.npy')
-        dino_eval.W2 = np.load('Data\w2.npy')
+        # print(f'W1: {dino_eval.W}')
+        # print(f'W2: {dino_eval.W2}')
+        with open('Data/w.npy','rb') as f:
+            dino_eval.W = np.load(f)
+        with open('Data/w2.npy','rb') as f2:
+            dino_eval.W2 = np.load(f2)
         print(f'W1: {dino_eval.W}')
         print(f'W2: {dino_eval.W2}')
     dinosaurs = [dino_eval]
@@ -413,7 +421,10 @@ def eval(fps=30):
             elif rand_int == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
             elif rand_int == 2:
-                obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                if np.random.rand()<0.5:
+                        obstacles.append(Bird(BIRD, random.randint(0, 1)))
+                else:
+                    obstacles.append(HighBird(BIRD,2))
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
@@ -425,29 +436,25 @@ def eval(fps=30):
             if dino_eval.rect.y == dino_eval.Y_POS or dino_eval.rect.y == dino_eval.Y_POS+40:
                 # output = dino_eval.W @ np.array([dino_eval.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
                 output = dino_eval.W @ np.array([dino_eval.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_eval.rect.x, dino_eval.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                # output = sigmoid(output)
                 output   = np.maximum(output,0)
                 output = dino_eval.W2 @ output
                 output = output.reshape(-1)
-                # print(output)
-                # output /= sum(output)
                 if np.argmax(output)==0 :
                     dino_eval.dino_jump = True
                     dino_eval.dino_run = False
                     dino_eval.dino_duck = False
                 
-                
-                mode = 1
-            elif np.argmax(output)==1 :
-                dino_eval.dino_jump = False
-                dino_eval.dino_run = False
-                dino_eval.dino_duck = True
-                mode = 2   
-            else:
-                dino_eval.dino_jump = False
-                dino_eval.dino_run = True
-                dino_eval.dino_duck = False
-                mode = 3
+                    mode = 1
+                elif np.argmax(output)==1 :
+                    dino_eval.dino_jump = False
+                    dino_eval.dino_run = False
+                    dino_eval.dino_duck = True
+                    mode = 2   
+                else:
+                    dino_eval.dino_jump = False
+                    dino_eval.dino_run = True
+                    dino_eval.dino_duck = False
+                    mode = 3
                 # SCREEN.blit(text3, (400, 50))
         if mode==1:
             SCREEN.blit(text1, (400, 50))
