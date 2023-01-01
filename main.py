@@ -34,8 +34,6 @@ BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
 FONT = pygame.font.Font('Fonts/PressStart2P.ttf', 16)
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
 class Dinosaur:
     X_POS = 80
     Y_POS = 310
@@ -52,8 +50,8 @@ class Dinosaur:
         self.step_index = 0
         # self.W = np.random.randn(8,4)
         # self.W2 = np.random.randn(3,8)
-        self.W = np.random.choice([-1.,-0.75,-0.25,0.,0.25,0.5,0.75,1.],size=(8,4))
-        self.W2 = np.random.choice([-1.,0.,1.],size=(3,8))
+        self.W = np.random.choice([-1.,0.,1.],size=(16,4))
+        self.W2 = np.random.choice([-1.,0.,1.],size=(3,16))
         self.score = 0
     def update(self):
         if self.dino_run:
@@ -199,7 +197,7 @@ class Genetic:
                 dino1,dino2 = np.random.choice(self.gen[:10],size=2,replace=False)
             if np.random.rand() < 1:
                 child = self.crossover(dino1,dino2)
-            if np.random.rand()<0.2:
+            if np.random.rand()<0.5:
                 self.gen.append(self.mutation(child))
             else:
                 self.gen.append(child)
@@ -293,44 +291,16 @@ def train(num_gen=10,num_dino=100,fps=30):
                 pygame.quit()
             if len(dinosaurs) == 0:
                 break
-            # elif len(dinosaurs) <= 5:
-            #     if dinosaurs[0].score >= genetic.best_score:
-            #         with open('Data\w.npy','wb') as f:
-            #             np.save(f,dinosaurs[0].W)
-            #         with open('Data\w2.npy','wb') as f2:
-            #             np.save(f2,dinosaurs[0].W2)
 
-
-            # if len(obstacles) == 0:
-            #     rand_int = random.randint(0, 2)
-            #     if rand_int == 0:
-            #         obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
-            #     elif rand_int == 1:
-            #         obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
-            #     elif rand_int == 2:
-            #         obstacles.append(Bird(BIRD, random.randint(0, 1)))
-            
-            if len(obstacles) == 0: 
+            if len(obstacles) == 0:
                 rand_int = random.randint(0, 2)
-                #Random obstacle
                 if rand_int == 0:
-                    if np.random.rand()<0.7:
-                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
-                    else:
-                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
-                        obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
+                    obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))
                 elif rand_int == 1:
-                    if np.random.rand()<0.7:
-                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
-                    else:
-                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
-                        obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
+                    obstacles.append(LargeCactus(LARGE_CACTUS, random.randint(0, 2)))
                 elif rand_int == 2:
-                    if np.random.rand()<0.5:
-                        obstacles.append(Bird(BIRD, random.randint(0, 1)))
-                    else:
-                        obstacles.append(HighBird(BIRD, random.randint(0, 1)))  
-                        obstacles.append(LowBird(BIRD, random.randint(0, 1)))
+                    obstacles.append(Bird(BIRD, random.randint(0, 1)))
+
             for obstacle in obstacles:
                 obstacle.draw(SCREEN)       
                 obstacle.update()

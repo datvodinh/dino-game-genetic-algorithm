@@ -1,0 +1,99 @@
+class Dinosaur:
+    -Attribute:
+        X_POS: x-coordinate of the dino
+        Y_POS: y-coordinate of the dino
+        JUMP_VEl: jump velocity of the dino
+        dino_run,dino_jump,dino_duck: track the action of the dino
+        rect: hitbox of the dino
+        W,W2: Weight of the neural network
+        score: score the dino have in that generation
+
+    -Method:
+        update(): update the action of the dino
+        jump(),run(),duck(): action
+
+class Obstacle:
+    -Attribute:
+        image: the image display on screen
+        type: type of Obstacle
+        rect: hitbox of the Obstacle
+
+    -Method:
+        update(): update the Obstacle on screen
+        draw(): draw the Obstacle
+    
+class SmallCactus(Obstacle):
+    -Attribute:
+        rect.y: height of the cactus's hitbox
+
+class LargeCactus(Obstacle):
+    -Attribute:
+            rect.y: height of the cactus's hitbox
+
+class Bird(Obstacle):
+    -Attribute:
+        rect.y: height of the Bird
+
+class Genetic:
+    -Attribute:
+        num_gen: number of generations when training
+        num_pop: number of Dinosaur each generation
+        gen_count: track the currrent number of generation
+        gen: contain all the Dinosaur each generation
+        gen_best: contain the top fittest Dinosaur
+        best_fitness: fitness of the top fittest Dinosaur
+        best_score: currrent best score of all generations
+    
+    -Method:
+        crossover(): perform the crossover between two parent and create offspring
+            child: new Dinosaur offspring
+            choice1: mask of W
+            choice2: mask of W2
+            np.where(): perform the uniform crossover with given mask
+            return the child with crossover weight
+
+        mutation(): mutate the offspring
+            dummy(): create a random Dinosaur weight
+            choice1, choice2: mask
+            np.where(): perform mutate with given probability by mask
+            return the mutation Dinosaur
+
+        fitness():return score of the Dinosaur
+
+        reset():reset the generation to create new
+
+        next_gen(): create the next generation
+            -add random (increase diversity)
+            -crossover
+            -mutation
+            -append to self.gen
+        
+        evaluate(): evaluate the currrent generation to choose the fittest
+
+def train(): train using Genetic Algorithm
+    x_pos_bg : x-coordinate of the background
+    y_pos_bg : y-coordinate of the background
+    game_speed : game speed
+
+    genetic: class Genetic()
+    for loop num_gen:
+        score(): display the score
+        statistics(): display the info (Dinosaur alive, generation count, gam speed)
+        background(): display the background
+        run = True : if this generation isn't end yet, run is True else False
+        while run:
+            update position all Dinosaur
+            upate position Obstacle
+            for dino in Dinosaur:
+                calculate the output of the neural network to decide action:
+                    output = dino.W @ state
+                    output = ReLU(output)
+                    output = dino.W2 @ output
+                    np.argmax(output) determine the action:
+                        0: jump
+                        1: duck
+                        2: run
+
+
+def eval():evaluate the performance of the best Dinosaur
+    same as def train(), except there is only one Dinosaur with best weight.
