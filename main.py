@@ -253,9 +253,9 @@ def train(num_gen=10,num_dino=100,fps=30):
                 game_speed += 1
                 game_speed = min(40,game_speed)
             text_1 = FONT.render(f'Score: {str(points)}', True, (0, 0, 0))
-            text_2 = FONT.render(f'Hi Score:{str(genetic.best_score)}',True,(0,0,0))
+            text_2 = FONT.render(f'Hi Fitness:{genetic.best_score:.1f}',True,(0,0,0))
             text_3 = FONT.render(f'TRAINING MODE!',True,(0,0,0))
-            SCREEN.blit(text_1, (850, 50))
+            # SCREEN.blit(text_1, (850, 50))
             SCREEN.blit(text_2, (850, 80))
             SCREEN.blit(text_3, (845, 20))
         def statistics():
@@ -322,7 +322,7 @@ def train(num_gen=10,num_dino=100,fps=30):
                     # print(len(dinosaurs))
                     else:
                         if dinosaur.dino_run==False:
-                            dinosaur.score+=0.8
+                            dinosaur.score+=0.1
                         else:
                             dinosaur.score+=1
                         if dinosaur.rect.y == dinosaur.Y_POS  or dinosaur.rect.y == dinosaur.Y_POS+40:
@@ -388,7 +388,7 @@ def eval(fps=30):
         if points % 300 == 0:
             game_speed += 1
             game_speed = min(40,game_speed)
-        text = FONT.render(f'Points:{str(points)}', True, (0, 0, 0))
+        text = FONT.render(f'Fitness:{dino_eval.score:.1f}', True, (0, 0, 0))
         text_2 = FONT.render(f'EVALUATE MODE!',True,(0,0,0))
         SCREEN.blit(text_2, (850, 20))
         SCREEN.blit(text, (850, 50))
@@ -421,6 +421,10 @@ def eval(fps=30):
         if len(dinosaurs) == 0:
             print(f'Dino final score: {dino_eval.score}')
             break
+        if dino_eval.dino_run==False:
+            dino_eval.score+=0.1
+        else:
+            dino_eval.score+=1
 
         if len(obstacles) == 0:
             rand_int = random.randint(0, 2)

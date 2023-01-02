@@ -168,8 +168,10 @@ def score():
     if points % 300 == 0:
         game_speed += 1
         game_speed = min(40,game_speed)
-    text = FONT.render(f'Points:{str(points)}', True, (0, 0, 0))
-    SCREEN.blit(text, (850, 50))
+    text = FONT.render(f'GA fitness: {dino_guide.score:.1f}', True, (0, 0, 0))
+    text2 = FONT.render(f'IE fitness: {dinosaur.score:.1f}', True, (0, 0, 0))
+    SCREEN.blit(text, (750, 50))
+    SCREEN.blit(text2, (750, 80))
 clock = pygame.time.Clock()
 mode = 0
 text1 = FONT.render(f'GA action: Jump!', True, (0, 0, 0))
@@ -194,7 +196,7 @@ while running:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(60)
+    clock.tick(120)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
@@ -218,9 +220,18 @@ while running:
             running = False 
             gameover_txt = FONT.render('GAME OVER',True,(0,0,0))
             SCREEN.blit(gameover_txt,(200,150))
+        else:
+            if dinosaur.dino_run==False:
+                dinosaur.score+=0.1
+            else:
+                dinosaur.score+=1
         if dino_guide.rect.colliderect(obstacle.rect):
             guide = False
         else:
+            if dino_guide.dino_run==False:
+                dino_guide.score+=0.1
+            else:
+                dino_guide.score+=1
             if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40 and len(obstacles)>0:
                 # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
                 output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop),game_speed],dtype=float).reshape(-1,1)

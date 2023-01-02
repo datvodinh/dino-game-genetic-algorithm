@@ -49,8 +49,8 @@ class Dinosaur:
         self.rect = pygame.Rect(self.X_POS, self.Y_POS, img.get_width(), img.get_height())
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.step_index = 0
-        self.W = np.random.randn(8,4)
-        self.W2 = np.random.randn(3,8)
+        self.W = np.random.randn(16,5)
+        self.W2 = np.random.randn(3,16)
         self.score = 0
     def update(self):
         if self.dino_run:
@@ -191,7 +191,7 @@ while running:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(120)
+    clock.tick(30)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
@@ -220,7 +220,7 @@ while running:
         else:
             if dino_guide.rect.y == dino_guide.Y_POS or dino_guide.rect.y == dino_guide.Y_POS+40 and len(obstacles)>0:
                 # output = dino_guide.W @ np.array([dino_guide.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
-                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop)],dtype=float).reshape(-1,1)
+                output = dino_guide.W @ np.array([dino_guide.rect.y,obstacle.rect.x,obstacle.rect.y,distance((dino_guide.rect.x, dino_guide.rect.y),obstacle.rect.midtop),game_speed],dtype=float).reshape(-1,1)
                 # output = sigmoid(output)
                 output   = np.maximum(output,0)
                 output = dino_guide.W2 @ output
