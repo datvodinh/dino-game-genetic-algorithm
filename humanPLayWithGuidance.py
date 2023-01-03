@@ -150,8 +150,8 @@ pausing = False
 dinosaurs = [dinosaur,dino_guide]
 dino_guide.W = np.load('Data\w.npy')
 dino_guide.W2 = np.load('Data\w2.npy')
-print(f'W1: {dino_guide.W}')
-print(f'W2: {dino_guide.W2}')
+# print(f'W1: {dino_guide.W}')
+# print(f'W2: {dino_guide.W2}')
 dino_guide.X_POS = 120
 def background():
     global x_pos_bg, y_pos_bg

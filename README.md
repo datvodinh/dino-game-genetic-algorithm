@@ -6,13 +6,14 @@
     3.Phan Khôi Nguyên 20210652
     4.Nguyễn Trung Trực 20214936
 
-
-### 1.How to clone repository
+### How to clone repository
 ```
 git clone https://github.com/datvodinh10/dino-ai-project-intro-ai-hust.git
 ```
-
-### 2.How to Train:
+### I.Two way to train/eval model
+### 1. Run all the code in main.ipynb (jupyter notebook)
+### 2. Run in terminal
+-How to Train:
 ```
 python main.py train [num_population] [num_dinosaur] [fps]
 ```
@@ -20,7 +21,7 @@ For example:
 ```
 python main.py train 100 100 1200
 ```
-### 3.How to Evaluate:
+-How to Evaluate:
 ```
 python main.py eval [fps]
 ```
@@ -28,8 +29,15 @@ For example:
 ```
 python main.py eval 60
 ```
-
-### 4.Requirement:
+-Evaluate by human:
+```
+python humanPLayWithGuidance.py
+```
+-Evaluate with If Else Algorithm:
+```
+python GeneticVSHandTuning.py
+```
+### II.Requirement:
 ```
 pip install pygame
 pip install numpy

@@ -150,8 +150,8 @@ pausing = False
 dinosaurs = [dinosaur,dino_guide]
 dino_guide.W = np.load('Data\w.npy')
 dino_guide.W2 = np.load('Data\w2.npy')
-print(f'W1: {dino_guide.W}')
-print(f'W2: {dino_guide.W2}')
+# print(f'W1: {dino_guide.W}')
+# print(f'W2: {dino_guide.W2}')
 # dino_guide.X_POS = 120
 def background():
     global x_pos_bg, y_pos_bg
@@ -200,7 +200,7 @@ while running and turn<4000:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(30)
+    clock.tick(90)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
