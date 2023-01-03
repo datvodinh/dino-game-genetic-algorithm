@@ -181,8 +181,12 @@ text21 = FONT.render(f'If Else action: Jump!', True, (0, 0, 0))
 text22 = FONT.render(f'If Else action: Duck!', True, (0, 0, 0))
 text23 = FONT.render(f'If Else action: Run!', True, (0, 0, 0))
 guide = True
-while running:
+ga_score = []
+ie_score = []
+turn = 0
+while running and turn<4000:
     #exiting   
+    turn+=1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -196,7 +200,7 @@ while running:
         dino_guide.draw(SCREEN,line=True,border=True)
     score()
     background()
-    clock.tick(120)
+    clock.tick(30)
     
     if len(obstacles) == 0: #What's len(ob)=0 means
         rand_int = random.randint(0, 2)
@@ -209,7 +213,10 @@ while running:
             if np.random.rand()<0.5:
                 obstacles.append(Bird(BIRD, random.randint(0, 1)))
             else:
-                obstacles.append(HighBird(BIRD,2))  
+                obstacles.append(HighBird(BIRD,2))
+    if turn%100==0:
+        ga_score.append(dino_guide.score)
+        ie_score.append(dinosaur.score)  
     for obstacle in obstacles:
         obstacle.draw(SCREEN)
         obstacle.update()
@@ -274,8 +281,8 @@ while running:
             # print(vr,vj,Dx,Ox,Oy,h1,h2)
             if dinosaur.dino_duck == True:
                 dinosaur.dino_jump = False
-                dinosaur.dino_run = False
-                dinosaur.dino_duck = True
+                dinosaur.dino_run = True
+                dinosaur.dino_duck = False
                 mode2=2
             if (dinosaur.rect.y == dinosaur.Y_POS or dinosaur.rect.y == dinosaur.Y_POS+40):
                 dinosaur.dino_jump = True
@@ -312,6 +319,6 @@ while running:
     pygame.display.update()
     pygame.display.flip()
 pygame.quit() 
-
+print(ga_score,ie_score)
 
         

@@ -64,7 +64,7 @@ class Genetic:
 
         next_gen(): create the next generation
             -add random (increase diversity)
-            -crossover
+            -crossover (use roulette selection to choose parent)
             -mutation
             -append to self.gen
         

@@ -6,7 +6,7 @@ import sys
 import numpy as np
 # from genetic import Genetic
 pygame.init()
-
+fitness_array = []
 
 # Global Constants
 SCREEN_HEIGHT = 600
@@ -217,11 +217,13 @@ class Genetic:
         self.reset()
         self.w = self.gen_best[-1].W
         self.w2 = self.gen_best[-1].W2
-        # print(self.gen_best)
-        print(f'Top Fitness:{self.best_fitness}')
+        # #print(self.gen_best)
+        #print(f'Top Fitness:{self.best_fitness}')
+        fitness_array.append(float(self.best_fitness[-1]))
+        # print(fitness_array)
 
 def train(num_gen=10,num_dino=100,fps=30):
-    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
+    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points,fitness_array
     clock = pygame.time.Clock()
     
 
@@ -287,12 +289,13 @@ def train(num_gen=10,num_dino=100,fps=30):
             for dinosaur in dinosaurs:
                 dinosaur.update()
                 dinosaur.draw(SCREEN)
-            if points>=100000:
-                with open('Data\w.npy','wb') as f:
-                        np.save(f,dinosaurs[0].W)
-                with open('Data\w2.npy','wb') as f2:
-                    np.save(f2,dinosaurs[0].W2)
-                print('Saved!')
+            if points>=30000:
+                # with open('Data\w.npy','wb') as f:
+                #         np.save(f,dinosaurs[0].W)
+                # with open('Data\w2.npy','wb') as f2:
+                #     np.save(f2,dinosaurs[0].W2)
+                #print('Saved!')
+                print(fitness_array,genetic.gen_count)
                 genetic.best_score = 100000
                 pygame.quit()
             if len(dinosaurs) == 0:
@@ -317,12 +320,12 @@ def train(num_gen=10,num_dino=100,fps=30):
                     if dinosaur.rect.colliderect(obstacle.rect):
                         # dinosaur.score = points
                         remove(i)
-                    # print(len(dinosaurs))
+                    # #print(len(dinosaurs))
                     else:
                         if dinosaur.dino_run==False:
                             dinosaur.score+=0.1
                         else:
-                            dinosaur.score+=1
+                            dinosaur.score+=1.0
                         if dinosaur.rect.y == dinosaur.Y_POS  or dinosaur.rect.y == dinosaur.Y_POS+40:
 
                             output = dinosaur.W @ np.array([dinosaur.rect.y,obstacle.rect.x,obstacle.rect.y,\
@@ -350,8 +353,9 @@ def train(num_gen=10,num_dino=100,fps=30):
             background()
             clock.tick(fps)
             pygame.display.update()
-        
+        # print(fitness_array)
         genetic.evaluate()
+        
 
 def eval(fps=30):
     global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points
@@ -369,17 +373,17 @@ def eval(fps=30):
     if sys.argv[1]=='eval_best':
         dino_eval.W = np.load('Data\w_best.npy')
         dino_eval.W2 = np.load('Data\w2_best.npy')
-        print(f'W1: {dino_eval.W}')
-        print(f'W2: {dino_eval.W2}')
+        #print(f'W1: {dino_eval.W}')
+        #print(f'W2: {dino_eval.W2}')
     elif sys.argv[1]=='eval':
-        # print(f'W1: {dino_eval.W}')
-        # print(f'W2: {dino_eval.W2}')
+        # #print(f'W1: {dino_eval.W}')
+        # #print(f'W2: {dino_eval.W2}')
         with open('Data/w.npy','rb') as f:
             dino_eval.W = np.load(f)
         with open('Data/w2.npy','rb') as f2:
             dino_eval.W2 = np.load(f2)
-        print(f'W1: {dino_eval.W}')
-        print(f'W2: {dino_eval.W2}')
+        #print(f'W1: {dino_eval.W}')
+        #print(f'W2: {dino_eval.W2}')
     dinosaurs = [dino_eval]
 
     def score():
@@ -419,7 +423,7 @@ def eval(fps=30):
         dino_eval.draw(SCREEN)
 
         if len(dinosaurs) == 0:
-            print(f'Dino final score: {dino_eval.score}')
+            #print(f'Dino final score: {dino_eval.score}')
             break
         if dino_eval.dino_run==False:
             dino_eval.score+=0.1
